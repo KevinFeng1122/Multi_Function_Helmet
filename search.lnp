@@ -1,0 +1,4 @@
+"STARTUP.obj",
+"search.obj" 
+TO "search" 
+RAMSIZE(256) 

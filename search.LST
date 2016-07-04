@@ -1,0 +1,322 @@
+C51 COMPILER V9.01   SEARCH                                                                01/11/2013 15:04:50 PAGE 1   
+
+
+C51 COMPILER V9.01, COMPILATION OF MODULE SEARCH
+OBJECT MODULE PLACED IN search.OBJ
+COMPILER INVOKED BY: E:\µç×Ó\Keil\C51\BIN\C51.EXE search.c BROWSE DEBUG OBJECTEXTEND
+
+line level    source
+
+   1          #include "reg51.h"
+   2          
+   3          sbit  ZD_BUSY =P1^2; //½ÓÊÕÒº¾§·¢À´µÄ"Ã¦"(BUSY)ÐÅºÅ,¿ÉÒÔÁ¬½ÓÓÚÈÎÒâÒ»Î»ÊäÈëÒý½ÅÉÏ.   
+   4          sbit sw1=P3^7;
+   5          sbit sw2=P3^6; 
+   6          sbit sw3=P3^5;
+   7          sbit sw4=P3^4;
+   8          sbit sw5=P3^3;
+   9          sbit sw6=P3^2;
+  10          sbit P1_0=P1^0;
+  11          sbit Commu_1=P1^7;//²Ù×÷¿ØÖÆ¶Ô½²Ä£¿é¿ª¹ØµÄÈý¼«¹ÜµÄÒý½ÅP31
+  12          #define TXD P1_0
+  13             
+  14          
+  15          unsigned char flag=0,temp=45,place=0;
+  16          
+  17          //ÑÓÊ±³ÌÐò*
+  18          void Delay2cp(unsigned char i)
+  19          {
+  20   1           while(--i);                     //¸ÕºÃÁ½¸öÖ¸ÁîÖÜÆÚ    .
+  21   1      }
+  22          
+  23          //Íù´®¿ÚÐ´Ò»¸ö×Ö½Ú
+  24          void WByte(unsigned char input)
+  25          {
+  26   1           unsigned char i=8;
+  27   1           TXD=(bit)0;                     //·¢ËÍÆôÊ¼Î»
+  28   1           Delay2cp(39);                  //·¢ËÍ8Î»Êý¾ÝÎ»
+  29   1           while(i--)
+  30   1           {
+  31   2               TXD=(bit)(input&0x01);     //ÏÈ´«µÍÎ»
+  32   2               Delay2cp(36);
+  33   2               input=input>>1;
+  34   2           }
+  35   1           TXD=(bit)0;                      //·¢ËÍÐ£ÑéÎ»(ÎÞ)
+  36   1               Delay2cp(48);
+  37   1           TXD=(bit)1;                     //·¢ËÍ½áÊøÎ»
+  38   1           Delay2cp(46);
+  39   1      }
+  40          
+  41          void FSsj(unsigned char A)
+  42          //Í¨¹ýÓ²¼þ´®¿Ú·¢ËÍ1×Ö½Ú
+  43          {
+  44   1               while(ZD_BUSY);       // Èç¹ûÖÕ¶Ë"Ã¦",ÔòµÈ´ý
+  45   1               WByte(A);      // ·¢ËÍÒ»×Ö½Ú
+  46   1      }
+  47          //Àý£ºFSsj(0x1B);FSsj(0x31);
+  48          //=========================================================================================
+  49          void CSH( )//³õÊ¼»¯
+  50          {
+  51   1              FSsj(0x1B);
+  52   1              FSsj(0x40);
+  53   1      }
+  54          //Àý£ºCSH(0)
+  55          void QPM(unsigned char ys)
+C51 COMPILER V9.01   SEARCH                                                                01/11/2013 15:04:50 PAGE 2   
+
+  56          //ÇåÆÁÄ»Îªys=0(µ×É«),7(ÏÔÊ¾É«)
+  57          {
+  58   1              FSsj(0x1B);
+  59   1              FSsj(0x51);
+  60   1              FSsj(ys);
+  61   1      }
+  62          
+  63          void YS(unsigned char n)
+  64          //ÑÓÊ±0.1Ãë ¡ª 25.5Ãë£¬n=1 ¡ª 255
+  65          {
+  66   1              FSsj(0x1B);
+  67   1              FSsj(0x6C);
+  68   1              FSsj(n);
+  69   1      }
+  70           // =======================================================================================
+  71           //void JSSJ(unsigned char ys)
+  72          //=========================================================================================
+  73          
+  74          void serialinit()
+  75          {
+  76   1              TMOD=0x20;  //ÉèÖÃ¶¨Ê±Æ÷1Îª¹¤×÷·½Ê½2
+  77   1              TH1=0xfd;   //×°³õÖµ
+  78   1              TL1=0xfd;
+  79   1              TR1=1;     //Æô¶¯¶¨Ê±Æ÷1
+  80   1              REN=1;    // ´®¿ÚÔÊÐí½ÓÊÕ
+  81   1              SM0=0;     //ÉèÖÃ´®¿Ú¹¤×÷·½Ê½
+  82   1              SM1=1;
+  83   1              EA=1;//×ÜÖÐ¶Ï´ò¿ª
+  84   1              ES=1;//´®¿ÚÖÐ¶Ï´ò¿ª
+  85   1      }
+  86           void main(void)
+  87           {      
+  88   1              int a=0,b=0,help=0;
+  89   1              serialinit();
+  90   1              while(sw5==1);  
+  91   1              QPM(0); 
+  92   1          CSH();
+  93   1              QPM(0); 
+  94   1          CSH();
+  95   1              FSsj(0x1b);FSsj(0x6a);FSsj(0x00);FSsj(0x01);FSsj(0x00);FSsj(0x01);FSsj(0x00);FSsj(0x7f);FSsj(0x00);FSsj(0
+             -x3f); //È«ÆÁ¾ØÐÎ¿ò
+  96   1              FSsj(0x1b);FSsj(0x7a);FSsj(0x00);FSsj(0x04);FSsj(0x00);FSsj(0x10);FSsj(0x1b);FSsj(0x33);
+  97   1                           FSsj(0x20);FSsj(0x21);FSsj(0x22);FSsj(0x23);FSsj(0x24);FSsj(0x25);FSsj(0x26);FSsj(0x27);FSsj
+             -(0x28);FSsj(0x29);     //±±¾©¿Æ¼¼´óÑ§´´ÐÂÏîÄ¿
+  98   1              FSsj(0x1b);FSsj(0x7a);FSsj(0x00);FSsj(0x10);FSsj(0x00);FSsj(0x28);
+  99   1                                      FSsj(0x2a);FSsj(0x2b);FSsj(0x2c);FSsj(0x2d);FSsj(0x2e);FSsj(0x2f);FSsj(0x30);FSsj(0x31); //µØÕðÍ·¿øËÑ¾
+             -ÈÄ£¿é
+ 100   1              YS(30);          
+ 101   1              while(1)
+ 102   1              {               
+ 103   2                  QPM(0);     
+ 104   2                  CSH();
+ 105   2                      //keep/turn the communication module off
+ 106   2                      Commu_1=1;//P31=high        
+ 107   2                      FSsj(0x1b);FSsj(0x7a);FSsj(0x00);FSsj(0x09);FSsj(0x00);FSsj(0x02);FSsj(0x1b);FSsj(0x33);
+ 108   2                      FSsj (0x43);FSsj(0x44);FSsj(0x46);FSsj(0x45);FSsj(0x4c);FSsj(0x4d);FSsj(0x4e);FSsj(0x4f);
+ 109   2                      FSsj(0x50);FSsj(0x51);FSsj(0x52);FSsj(0x53);//sw1.²é¿´²Ù×÷Ê¹ÓÃËµÃ÷
+ 110   2                      FSsj(0x1b);FSsj(0x7a);FSsj(0x00);FSsj(0x09);FSsj(0x00);FSsj(0x1e);
+ 111   2                      FSsj (0x43);FSsj(0x44);FSsj(0x47);FSsj(0x45);FSsj(0x54);FSsj(0x55);FSsj(0x56);FSsj(0x57);
+ 112   2                      FSsj(0x58);FSsj(0x59);FSsj(0x5a);FSsj(0x5e);//sw2.¿ªÊ¼ËÑË÷±»À§ÈËÔ±
+ 113   2                      while(sw1==1&&sw2==1)
+ 114   2                      {
+C51 COMPILER V9.01   SEARCH                                                                01/11/2013 15:04:50 PAGE 3   
+
+ 115   3                              if(temp==0xbf)
+ 116   3                              {
+ 117   4                                      help=1;
+ 118   4                                      break;
+ 119   4                              }
+ 120   3                      }
+ 121   2                      if(sw1==0)
+ 122   2                      {
+ 123   3                              //²Ù×÷ËµÃ÷
+ 124   3                              QPM(0); 
+ 125   3                      CSH();
+ 126   3                              FSsj(0x1b);FSsj(0x7a);FSsj(0x00);FSsj(0x09);FSsj(0x00);FSsj(0x02);FSsj(0x1b);FSsj(0x33);
+ 127   3                              FSsj(0x43);FSsj(0x44);FSsj(0x4b);FSsj(0x45);FSsj(0x7d);FSsj(0x7e);FSsj(0x7f);FSsj(0x80);
+ 128   3                              FSsj(0x81);FSsj(0x82);FSsj(0x83);FSsj(0x84);FSsj(0x74);FSsj(0x43);FSsj(0x44);FSsj(0x46);
+ 129   3                              FSsj(0x45);FSsj(0x85);FSsj(0x86);FSsj(0x87);FSsj(0x88);FSsj(0x89);FSsj(0x8a);FSsj(0x74);
+ 130   3                              FSsj(0x43);FSsj(0x44);FSsj(0x47);FSsj(0x45);FSsj(0x8b);FSsj(0x8c);FSsj(0x8d);FSsj(0x8e);
+ 131   3                              FSsj(0x8f);FSsj(0x90);FSsj(0x9a);       //sw6.¿ÉËæÊ±·µ»ØÖ÷²Ëµ¥£¬sw1.²é¿´Ëù´¦µØµã£¬sw2.²é¿´ÊµÊ±ÌåÎÂ
+ 132   3                              while(sw6==1);
+ 133   3                              continue;
+ 134   3                      }
+ 135   2                      if(sw2==0||help==1)
+ 136   2                      {
+ 137   3                              help=0;
+ 138   3                                //ËÑ¾ÈÖÐ¡£¡£¡£
+ 139   3                              QPM(0); 
+ 140   3                      CSH();
+ 141   3                              FSsj(0x1b);FSsj(0x7a);FSsj(0x00);FSsj(0x1c);FSsj(0x00);FSsj(0x15);FSsj(0x1b);FSsj(0x33);
+ 142   3                              FSsj(0x2e);FSsj(0x2f);FSsj(0x99);FSsj(0xe8);FSsj(0xe8);FSsj(0xe8);FSsj(0xe8);
+ 143   3                              while(temp!=0xcf&&sw6==1)
+ 144   3                              {
+ 145   4                                      FSsj(0x1b);FSsj(0x7a);FSsj(0x00);FSsj(0x40);FSsj(0x00);FSsj(0x15);
+ 146   4                                      YS(10);FSsj(0xe8);
+ 147   4                                      SBUF=0Xee;
+ 148   4                                      while(TI!=1);
+ 149   4                                              TI=0;
+ 150   4                                      YS(10);FSsj(0xe8);
+ 151   4                                      if(temp==0xcf||sw6==0)
+ 152   4                                      {
+ 153   5                                              RI=0;
+ 154   5                                              break;
+ 155   5                                      }
+ 156   4                                      SBUF=0Xee;
+ 157   4                                      while(TI!=1);
+ 158   4                                              TI=0;
+ 159   4                                      YS(10);FSsj(0xe8);
+ 160   4                                      if(temp==0xcf||sw6==0)
+ 161   4                                      {
+ 162   5                                              RI=0;
+ 163   5                                              break;
+ 164   5                                      }
+ 165   4                                      SBUF=0Xee;
+ 166   4                                      while(TI!=1);
+ 167   4                                              TI=0;
+ 168   4                                      YS(10);FSsj(0xe8);
+ 169   4                                      if(temp==0xcf||sw6==0)
+ 170   4                                      {
+ 171   5                                              RI=0;
+ 172   5                                              break;
+ 173   5                                      }
+ 174   4                                      SBUF=0Xee;
+ 175   4                                      while(TI!=1);
+ 176   4                                              TI=0;
+C51 COMPILER V9.01   SEARCH                                                                01/11/2013 15:04:50 PAGE 4   
+
+ 177   4                              }
+ 178   3                              if(sw6==0)
+ 179   3                                      continue;
+ 180   3                              RI=0;
+ 181   3                                      //½Óµ½Çó¾ÈÐÅºÅ£¬ÊÇ·ñ²é¿´£¿ sw4.²é¿´ sw3.²»²é¿´
+ 182   3                              QPM(0); 
+ 183   3                      CSH();
+ 184   3                              FSsj(0x1b);FSsj(0x7a);FSsj(0x00);FSsj(0x09);FSsj(0x00);FSsj(0x00);FSsj(0x1b);FSsj(0x33);
+ 185   3                              FSsj(0x6e);FSsj(0x6f);FSsj(0x70);FSsj(0x71);FSsj(0x72);FSsj(0x73);FSsj(0x74);FSsj(0x75);
+ 186   3                              FSsj(0x76);FSsj(0x77);FSsj(0x78);FSsj(0x79);
+ 187   3                              FSsj(0x1b);FSsj(0x7a);FSsj(0x00);FSsj(0x16);FSsj(0x00);FSsj(0x1c);
+ 188   3                              FSsj(0x43);FSsj(0x44);FSsj(0x49);FSsj(0x45);FSsj(0x7b);FSsj(0x7c);
+ 189   3                              FSsj(0x1b);FSsj(0x7a);FSsj(0x00);FSsj(0x16);FSsj(0x00);FSsj(0x2c);
+ 190   3                              FSsj(0x43);FSsj(0x44);FSsj(0x48);FSsj(0x45);FSsj(0x7a);FSsj(0x7b);FSsj(0x7c);
+ 191   3                              
+ 192   3                              //the search teminal's communication module has been turned on;the wearer has been requested to communi
+             -cate to you.
+ 193   3                              Commu_1=0;//P31=low
+ 194   3      
+ 195   3                              while(sw4==1&&sw3==1);
+ 196   3                              if(sw4==0)
+ 197   3                              {
+ 198   4                                      //±»À§ÈËÔ±ÐÅÏ¢
+ 199   4                                      QPM(0); 
+ 200   4                              CSH();
+ 201   4                                      FSsj(0x1b);FSsj(0x7a);FSsj(0x00);FSsj(0x09);FSsj(0x00);FSsj(0x00);
+ 202   4                                      FSsj(0x1b);FSsj(0x33);FSsj(0x32);FSsj(0x33);FSsj(0x34);FSsj(0x35);FSsj(0x36);
+ 203   4                                      FSsj(0x37);FSsj(0x38);FSsj(0x39);FSsj(0x3a);
+ 204   4      
+ 205   4                                      //Ëù´¦µØµã£º
+ 206   4                                       
+ 207   4                                      //ÊµÊ±ÎÂ¶È£º
+ 208   4                                      
+ 209   4                                      while(sw6==1)
+ 210   4                                      {
+ 211   5                                              if(sw1==0)
+ 212   5                                              {
+ 213   6                                                      SBUF=0Xbb;
+ 214   6                                                      while(TI!=1);
+ 215   6                                                              TI=0;
+ 216   6                                                      while(sw5==1);
+ 217   6                                                      //(´òÓ¡µØµã)
+ 218   6                                                      if(temp==0xbd)
+ 219   6                                                      {
+ 220   7                                                              FSsj(0x1b);FSsj(0x7a);FSsj(0x00);FSsj(0x08);FSsj(0x00);FSsj(0x10);
+ 221   7                                                              FSsj(0x3d);FSsj(0x3e);FSsj(0x9a);FSsj(0xa0);FSsj(0xa1);FSsj(0xa2);FSsj(0xa3);FSsj(0xa4);FSsj(0xa5);
+             -FSsj(0xa6);
+ 222   7                                                              RI=0;
+ 223   7                                                      }
+ 224   6                                                      else
+ 225   6                                                      {
+ 226   7                                                              FSsj(0x1b);FSsj(0x7a);FSsj(0x00);FSsj(0x10);FSsj(0x00);FSsj(0x10);
+ 227   7                                                              FSsj(0x3b);FSsj(0x3c);FSsj(0x3d);FSsj(0x3e);FSsj(0x9a);FSsj(0x64);FSsj(0x65);FSsj(0x66);
+ 228   7                                                              RI=0;   
+ 229   7                                                      }
+ 230   6                                              }
+ 231   5                                              if(sw2==0)
+ 232   5                                              {
+ 233   6                                                      SBUF=0Xaa;
+ 234   6                                                      while(TI!=1);
+ 235   6                                                              TI=0;
+ 236   6                                                      while(sw5==1);
+C51 COMPILER V9.01   SEARCH                                                                01/11/2013 15:04:50 PAGE 5   
+
+ 237   6                                                      //(´òÓ¡ÎÂ¶È)
+ 238   6                                                      FSsj(0x1b);FSsj(0x7a);FSsj(0x00);FSsj(0x10);FSsj(0x00);FSsj(0x20);
+ 239   6                                                      FSsj(0x3f);FSsj(0x40);FSsj(0x41);FSsj(0x42);FSsj(0x9a);
+ 240   6                                                      a=temp/10;
+ 241   6                                                      FSsj(0x1b);FSsj(0x7a);FSsj(0x00);FSsj(0x48);FSsj(0x00);FSsj(0x26);
+ 242   6                                                      FSsj(0x1b);FSsj(0x31);
+ 243   6                                                      switch(a)
+ 244   6                                                      {
+ 245   7                                                              case 0:FSsj('0');  break;
+ 246   7                                                              case 1:FSsj('1');  break;
+ 247   7                                                              case 2:FSsj('2');  break;
+ 248   7                                                              case 3:FSsj('3');  break;
+ 249   7                                                              case 4:FSsj('4');  break;
+ 250   7                                                              case 5:FSsj('5');  break;
+ 251   7                                                              case 6:FSsj('6');  break;
+ 252   7                                                              case 7:FSsj('7');  break;
+ 253   7                                                              case 8:FSsj('8');  break;
+ 254   7                                                              case 9:FSsj('9');  break;
+ 255   7                                                      }
+ 256   6                                                  b=temp%10;
+ 257   6                                                      switch(b)
+ 258   6                                                      {
+ 259   7                                                              case 0:FSsj('0');  break;
+ 260   7                                                              case 1:FSsj('1');  break;
+ 261   7                                                              case 2:FSsj('2');  break;
+ 262   7                                                              case 3:FSsj('3');  break;
+ 263   7                                                              case 4:FSsj('4');  break;
+ 264   7                                                              case 5:FSsj('5');  break;
+ 265   7                                                              case 6:FSsj('6');  break;
+ 266   7                                                              case 7:FSsj('7');  break;
+ 267   7                                                              case 8:FSsj('8');  break;
+ 268   7                                                              case 9:FSsj('9');  break;
+ 269   7                                                      }
+ 270   6                                                      FSsj(0x1b);FSsj(0x7a);FSsj(0x00);FSsj(0x55);FSsj(0x00);FSsj(0x20);
+ 271   6                                                      FSsj(0x1b);FSsj(0x33);FSsj(0x69);
+ 272   6                                              }
+ 273   5                                      }
+ 274   4                                      SBUF=0Xcc;
+ 275   4                                      while(TI!=1);
+ 276   4                                              TI=0;   
+ 277   4                              }
+ 278   3                      }                                               
+ 279   2              }
+ 280   1      }
+ 281           
+ 282          void ser() interrupt 4
+ 283          {                                                                               
+ 284   1              temp=SBUF;
+ 285   1              RI=0;
+ 286   1      }                                                
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =   1659    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =      3       4
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)
